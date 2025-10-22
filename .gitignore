@@ -140,3 +140,9 @@ vite.config.ts.timestamp-*
 
 #package-lock.json file
 package-lock.json
+
+#Firebase account key
+src/config/serviceAccountKey.json
+
+#.env file
+.env
