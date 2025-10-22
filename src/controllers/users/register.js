@@ -1,0 +1,85 @@
+import { db } from "../../config/firebase.js";
+import bcrypt from "bcrypt";
+
+export const registerUser = async (req, res) => {
+  try {
+    const { name, lastName, universityId, email, contactNumber, password, photo } = req.body;
+    
+    console.log("📝 Registering new user:", { name, lastName, universityId, email, contactNumber });
+
+    // Check if user already exists by email
+    const existingUserByEmail = await db.collection("users")
+      .where("email", "==", email.toLowerCase().trim())
+      .limit(1)
+      .get();
+
+    if (!existingUserByEmail.empty) {
+      return res.status(409).json({
+        success: false,
+        error: "User with this email already exists"
+      });
+    }
+
+    // Check if user already exists by university ID
+    const existingUserByUniId = await db.collection("users")
+      .where("universityId", "==", parseInt(universityId))
+      .limit(1)
+      .get();
+
+    if (!existingUserByUniId.empty) {
+      return res.status(409).json({
+        success: false,
+        error: "User with this university ID already exists"
+      });
+    }
+
+    // Hash the password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create user document
+    const userData = {
+      name: name.trim(),
+      lastName: lastName.trim(),
+      universityId: parseInt(universityId),
+      email: email.toLowerCase().trim(),
+      contactNumber: contactNumber.toString(),
+      password: hashedPassword, // Now properly hashed
+      photo: photo || null, // Optional photo
+      role: "passenger", // Default role
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true
+    };
+
+    // Add user to Firestore
+    const userRef = await db.collection("users").add(userData);
+    
+    console.log("✅ User registered successfully with ID:", userRef.id);
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      userId: userRef.id,
+      user: {
+        id: userRef.id,
+        name: userData.name,
+        lastName: userData.lastName,
+        universityId: userData.universityId,
+        email: userData.email,
+        contactNumber: userData.contactNumber,
+        photo: userData.photo,
+        role: userData.role,
+        createdAt: userData.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ User registration error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error during registration",
+      details: error.message
+    });
+  }
+};
