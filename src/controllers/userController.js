@@ -1,9 +1,104 @@
 import { db } from "../config/firebase.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
-// Utility function to compare passwords (for future login functionality)
+// Utility function to compare passwords
 export const comparePassword = async (plainPassword, hashedPassword) => {
   return await bcrypt.compare(plainPassword, hashedPassword);
+};
+
+// Login validation middleware
+export const validateLogin = [
+  (req, res, next) => {
+    const { email, password } = req.body;
+    
+    // Check required fields
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: email, password"
+      });
+    }
+
+    // Validate email domain
+    if (!email.endsWith('@unisabana.edu.co')) {
+      return res.status(400).json({
+        success: false,
+        error: "Email must end with @unisabana.edu.co"
+      });
+    }
+
+    next();
+  }
+];
+
+// Login endpoint
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    console.log("🔐 Login attempt for:", email);
+
+    // Find user by email
+    const userSnapshot = await db.collection("users")
+      .where("email", "==", email.toLowerCase().trim())
+      .where("isActive", "==", true)
+      .limit(1)
+      .get();
+
+    if (userSnapshot.empty) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password"
+      });
+    }
+
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+
+    // Compare password
+    const isPasswordValid = await comparePassword(password, userData.password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password"
+      });
+    }
+
+    console.log("✅ User logged in successfully:", userData.email);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: userDoc.id,
+        email: userData.email,
+        role: userData.role
+      },
+      process.env.JWT_SECRET || "your-secret-key", // In production, use a proper secret
+      { expiresIn: "24h" }
+    );
+
+    res.status(200).json({
+      message: "Login successful.",
+      token: token,
+      user: {
+        id: userDoc.id,
+        name: userData.name,
+        lastName: userData.lastName,
+        email: userData.email,
+        roles: [userData.role]
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error during login",
+      details: error.message
+    });
+  }
 };
 
 // Validation middleware
@@ -164,6 +259,44 @@ export const registerUser = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Internal server error during registration",
+      details: error.message
+    });
+  }
+};
+
+// Get current user profile (protected route)
+export const getCurrentUser = async (req, res) => {
+  try {
+    // req.user is set by authMiddleware and contains the JWT payload
+    const { userId } = req.user;
+    
+    const userDoc = await db.collection("users").doc(userId).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+
+    const userData = userDoc.data();
+    
+    // Remove password from response for security
+    const { password, ...userWithoutPassword } = userData;
+    
+    res.status(200).json({
+      success: true,
+      user: {
+        id: userDoc.id,
+        ...userWithoutPassword
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Get current user error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
       details: error.message
     });
   }
