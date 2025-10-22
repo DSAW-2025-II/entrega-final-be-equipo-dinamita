@@ -3,7 +3,7 @@ import {
   getUserById, 
   getAllUsers,
   getCurrentUser
-} from "../controllers/userController.js";
+} from "../controllers/users/userController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = express.Router();

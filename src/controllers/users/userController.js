@@ -1,4 +1,4 @@
-import { db } from "../config/firebase.js";
+import { db } from "../../config/firebase.js";
 
 // Get current user profile (protected route)
 export const getCurrentUser = async (req, res) => {
