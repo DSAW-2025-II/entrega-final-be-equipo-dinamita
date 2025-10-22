@@ -5,7 +5,7 @@ export const registerUser = async (req, res) => {
   try {
     const { name, lastName, universityId, email, contactNumber, password, photo } = req.body;
     
-    console.log("📝 Registering new user:", { name, lastName, universityId, email, contactNumber });
+    console.log("Registering new user:", { name, lastName, universityId, email, contactNumber });
 
     // Check if user already exists by email
     const existingUserByEmail = await db.collection("users")
@@ -55,7 +55,7 @@ export const registerUser = async (req, res) => {
     // Add user to Firestore
     const userRef = await db.collection("users").add(userData);
     
-    console.log("✅ User registered successfully with ID:", userRef.id);
+    console.log("User registered successfully with ID:", userRef.id);
 
     res.status(201).json({
       success: true,
@@ -83,3 +83,62 @@ export const registerUser = async (req, res) => {
     });
   }
 };
+
+export const uploadUserPhoto = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { photo } = req.body;
+    const { userId: authenticatedUserId } = req.user; // From authMiddleware
+
+    // Check if user is trying to update their own photo
+    if (userId !== authenticatedUserId) {
+      return res.status(403).json({
+        success: false,
+        error: "You can only update your own photo",
+      });
+    }
+
+    if (!photo) {
+      return res.status(400).json({
+        success: false,
+        error: "Photo data is required",
+      });
+    }
+
+    // Basic photo validation (assuming base64 or URL)
+    if (typeof photo !== 'string' || photo.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Photo must be a valid string (base64 or URL)",
+      });
+    }
+
+    const userRef = db.collection("users").doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    await userRef.update({
+      photo,
+      updatedAt: new Date(),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Photo uploaded successfully",
+    });
+
+  } catch (error) {
+    console.error("Error uploading photo:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error during photo upload",
+      details: error.message,
+    });
+  }
+}

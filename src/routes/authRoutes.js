@@ -1,8 +1,9 @@
 import express from "express";
-import { registerUser } from "../controllers/users/register.js";
+import { registerUser, uploadUserPhoto } from "../controllers/users/register.js";
 import { validateUserRegistration } from "../controllers/users/validateRegister.js";
 import { loginUser } from "../controllers/users/login.js";
 import { validateLogin } from "../controllers/users/validateLogin.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -11,5 +12,8 @@ router.post("/users/register", validateUserRegistration, registerUser);
 
 // Login user
 router.post("/login", validateLogin, loginUser);
+
+// Upload user photo (protected route - users can only update their own photo)
+router.patch("/users/:userId/photo", authMiddleware, uploadUserPhoto);
 
 export default router;

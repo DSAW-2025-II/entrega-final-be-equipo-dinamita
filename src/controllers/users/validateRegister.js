@@ -2,7 +2,7 @@ export const validateUserRegistration = [
   // Name validation
   (req, res, next) => {
     const { name, lastName, universityId, email, contactNumber, password, photo } = req.body;
-    
+     
     // Check required fields
     if (!name || !lastName || !universityId || !email || !contactNumber || !password) {
       return res.status(400).json({
