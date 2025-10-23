@@ -16,7 +16,7 @@ export const registerUser = async (req, res) => {
     if (!existingUserByEmail.empty) {
       return res.status(409).json({
         success: false,
-        error: "User with this email already exists"
+        error: "Ya existe un usuario con este email. Intente otro."
       });
     }
 
@@ -29,7 +29,7 @@ export const registerUser = async (req, res) => {
     if (!existingUserByUniId.empty) {
       return res.status(409).json({
         success: false,
-        error: "User with this university ID already exists"
+        error: "Ya existe un usuario con este ID. Intente de nuevo."
       });
     }
 

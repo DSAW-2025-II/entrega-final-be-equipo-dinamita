@@ -1,74 +1,74 @@
 export const validateUserRegistration = [
-  // Name validation
   (req, res, next) => {
-    const { name, lastName, universityId, email, contactNumber, password, photo } = req.body;
+    const {
+      name,
+      lastName,
+      universityId,
+      email,
+      contactNumber,
+      password,
+      photo
+    } = req.body ?? {};
 
-    // Check required fields
-    if (!name || !lastName || !universityId || !email || !contactNumber || !password) {
-      return res.status(400).json({
-        success: false,
-        error: "Se deben llenar todos los campos."
-      });
+    const errors = {};
+
+    // Helper to add message to a field (as array)
+    const addError = (field, message) => {
+      if (!errors[field]) errors[field] = [];
+      errors[field].push(message);
+    };
+
+    // If universityId present validate format
+    if (universityId !== undefined && universityId !== null && String(universityId).trim() !== "") {
+      if (!/^\d{6}$/.test(String(universityId))) {
+        addError("universityId", "¡Id de 6 dígitos!");
+      }
     }
 
-    // Validate university ID (6 digits)
-    if (!/^\d{6}$/.test(universityId.toString())) {
-      return res.status(400).json({
-        success: false,
-        error: "El ID de la universidad debe tener sólo 6 dígitos."
-      });
+    // Email domain
+    if (email) {
+      if (typeof email !== "string" || !email.toLowerCase().endsWith("@unisabana.edu.co")) {
+        addError("email", "¡Falta @unisabana.edu.co!");
+      }
     }
 
-    // Validate email domain
-    if (!email.endsWith('@unisabana.edu.co')) {
-      return res.status(400).json({
-        success: false,
-        error: "Email debe terminar con @unisabana.edu.co"
-      });
+    // Contact number (10 digits)
+    if (contactNumber !== undefined && contactNumber !== null && String(contactNumber).trim() !== "") {
+      if (!/^\d{10}$/.test(String(contactNumber))) {
+        addError("contactNumber", "¡Teléfono de 10 dígitos!");
+      }
     }
 
-    // Validate contact number (10 digits)
-    if (!/^\d{10}$/.test(contactNumber.toString())) {
-      return res.status(400).json({
-        success: false,
-        error: "Número telefónico debe tener 10 dígitos"
-      });
+    // Password rules
+    if (password) {
+      if (String(password).length < 8) {
+        addError("password", "¡Mínimo 8 caracteres!");
+      }
+      else if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(String(password))) {
+        addError("password", "¡Al menos un caracter especial!");
+      }
+      else if (!/(?=.*\d)/.test(String(password))) {
+        addError("password", "¡Al menos un número!");
+      }
     }
 
-    // Validate password (at least 8 characters, 1 special character, 1 number)
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: "Contraseña debe tener mínimo 8 caracteres"
-      });
+    // Name and lastName length
+    if (name && (String(name).trim().length < 2 || String(name).trim().length > 10)) {
+      addError("name", "¡Entre 2 y 10 caracteres!");
+    }
+    if (lastName && (String(lastName).trim().length < 2 || String(lastName).trim().length > 10)) {
+      addError("lastName", "¡Entre 2 y 10 caracteres!");
     }
 
-    if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)) {
-      return res.status(400).json({
-        success: false,
-        error: "Contraseña debe tener al menos un caracter especial"
-      });
-    }
+    if (Object.keys(errors).length > 0) {
+      // Convert arrays to single string per field (separador: espacio)
+      const formattedErrors = Object.fromEntries(
+        Object.entries(errors).map(([field, msgs]) => [field, msgs.join(' ')])
+      );
 
-    if (!/(?=.*\d)/.test(password)) {
       return res.status(400).json({
         success: false,
-        error: "Contraseña debe tener al menos un número"
-      });
-    }
-
-    // Validate name and lastName (not empty, reasonable length)
-    if (name.trim().length < 2 || name.trim().length > 50) {
-      return res.status(400).json({
-        success: false,
-        error: "El nombre debe tener entre 2 y 50 caracteres"
-      });
-    }
-
-    if (lastName.trim().length < 2 || lastName.trim().length > 50) {
-      return res.status(400).json({
-        success: false,
-        error: "El apellido debe tener entre 2 y 50 caracteres"
+        errors: formattedErrors
       });
     }
 
