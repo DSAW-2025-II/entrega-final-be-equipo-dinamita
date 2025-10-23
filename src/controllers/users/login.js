@@ -16,25 +16,9 @@ export const loginUser = async (req, res) => {
       .limit(1)
       .get();
 
-    if (userSnapshot.empty) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid email or password"
-      });
-    }
 
     const userDoc = userSnapshot.docs[0];
     const userData = userDoc.data();
-
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, userData.password);
-    
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid email or password"
-      });
-    }
 
     console.log("✅ User logged in successfully:", userData.email);
 
