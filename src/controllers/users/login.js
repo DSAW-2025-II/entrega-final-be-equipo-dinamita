@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import { db } from "../../config/firebase.js";
 
 // Login endpoint
