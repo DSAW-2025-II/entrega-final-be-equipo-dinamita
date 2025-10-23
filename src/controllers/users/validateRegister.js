@@ -1,5 +1,7 @@
+import { db } from "../../config/firebase.js";
+
 export const validateUserRegistration = [
-  (req, res, next) => {
+  async (req, res, next) => {
     const {
       name,
       lastName,
@@ -60,8 +62,32 @@ export const validateUserRegistration = [
       addError("lastName", "¡Entre 2 y 10 caracteres!");
     }
 
+    // Check if user already exists by email
+    if (email && !errors.email) {  // Solo verificar si el email es válido
+      const existingUserByEmail = await db.collection("users")
+        .where("email", "==", email.toLowerCase().trim())
+        .limit(1)
+        .get();
+
+      if (!existingUserByEmail.empty) {
+        addError("email", "¡Email ya registrado!");
+      }
+    }
+
+    // Check if user already exists by university ID
+    if (universityId && !errors.universityId) {  // Solo verificar si el ID es válido
+      const existingUserByUniId = await db.collection("users")
+        .where("universityId", "==", parseInt(universityId))
+        .limit(1)
+        .get();
+
+      if (!existingUserByUniId.empty) {
+        addError("universityId", "¡ID ya registrado!");
+      }
+    }
+
     if (Object.keys(errors).length > 0) {
-      // Convert arrays to single string per field (separador: espacio)
+      // Convert arrays to single string per field
       const formattedErrors = Object.fromEntries(
         Object.entries(errors).map(([field, msgs]) => [field, msgs.join(' ')])
       );

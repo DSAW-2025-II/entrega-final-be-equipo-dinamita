@@ -7,32 +7,6 @@ export const registerUser = async (req, res) => {
     
     console.log("Registering new user:", { name, lastName, universityId, email, contactNumber });
 
-    // Check if user already exists by email
-    const existingUserByEmail = await db.collection("users")
-      .where("email", "==", email.toLowerCase().trim())
-      .limit(1)
-      .get();
-
-    if (!existingUserByEmail.empty) {
-      return res.status(409).json({
-        success: false,
-        error: "Ya existe un usuario con este email. Intente otro."
-      });
-    }
-
-    // Check if user already exists by university ID
-    const existingUserByUniId = await db.collection("users")
-      .where("universityId", "==", parseInt(universityId))
-      .limit(1)
-      .get();
-
-    if (!existingUserByUniId.empty) {
-      return res.status(409).json({
-        success: false,
-        error: "Ya existe un usuario con este ID. Intente de nuevo."
-      });
-    }
-
     // Hash the password
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
