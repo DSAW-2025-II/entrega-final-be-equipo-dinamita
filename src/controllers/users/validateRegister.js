@@ -20,48 +20,6 @@ export const validateUserRegistration = [
       errors[field].push(message);
     };
 
-    // If universityId present validate format
-    if (universityId !== undefined && universityId !== null && String(universityId).trim() !== "") {
-      if (!/^\d{6}$/.test(String(universityId))) {
-        addError("universityId", "¡Id de 6 dígitos!");
-      }
-    }
-
-    // Email domain
-    if (email) {
-      if (typeof email !== "string" || !email.toLowerCase().endsWith("@unisabana.edu.co")) {
-        addError("email", "¡Falta @unisabana.edu.co!");
-      }
-    }
-
-    // Contact number (10 digits)
-    if (contactNumber !== undefined && contactNumber !== null && String(contactNumber).trim() !== "") {
-      if (!/^\d{10}$/.test(String(contactNumber))) {
-        addError("contactNumber", "¡Teléfono de 10 dígitos!");
-      }
-    }
-
-    // Password rules
-    if (password) {
-      if (String(password).length < 8) {
-        addError("password", "¡Mínimo 8 caracteres!");
-      }
-      else if (!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(String(password))) {
-        addError("password", "¡Al menos un caracter especial!");
-      }
-      else if (!/(?=.*\d)/.test(String(password))) {
-        addError("password", "¡Al menos un número!");
-      }
-    }
-
-    // Name and lastName length
-    if (name && (String(name).trim().length < 2 || String(name).trim().length > 10)) {
-      addError("name", "¡Entre 2 y 10 caracteres!");
-    }
-    if (lastName && (String(lastName).trim().length < 2 || String(lastName).trim().length > 10)) {
-      addError("lastName", "¡Entre 2 y 10 caracteres!");
-    }
-
     // Check if user already exists by email
     if (email && !errors.email) {  // Solo verificar si el email es válido
       const existingUserByEmail = await db.collection("users")
