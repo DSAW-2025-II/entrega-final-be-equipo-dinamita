@@ -20,7 +20,8 @@ export const registerUser = async (req, res) => {
       contactNumber: contactNumber.toString(),
       password: hashedPassword, // Now properly hashed
       photo: photo || null, // Optional photo
-      role: "passenger", // Default role
+      roles: ["passenger"], // Array de roles, inicializado como pasajero
+      currentRole: "passenger", // Rol actual del usuario
       createdAt: new Date(),
       updatedAt: new Date(),
       isActive: true
@@ -43,7 +44,8 @@ export const registerUser = async (req, res) => {
         email: userData.email,
         contactNumber: userData.contactNumber,
         photo: userData.photo,
-        role: userData.role,
+        roles: userData.roles,
+        currentRole: userData.currentRole,
         createdAt: userData.createdAt
       }
     });
