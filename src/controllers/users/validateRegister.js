@@ -8,9 +8,9 @@ export const validateUserRegistration = [
       universityId,
       email,
       contactNumber,
-      password,
-      photo
+      password
     } = req.body ?? {};
+    // photo ahora viene en req.file (multer), no en req.body
 
     const errors = {};
 

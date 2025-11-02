@@ -10,7 +10,8 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Límite estándar, multer maneja archivos
+app.use(express.urlencoded({ extended: true }));
 
 // API routes
 app.use("/api/users", userRoutes);

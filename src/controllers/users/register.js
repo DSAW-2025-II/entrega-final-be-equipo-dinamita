@@ -3,9 +3,15 @@ import bcrypt from "bcrypt";
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, lastName, universityId, email, contactNumber, password, photo } = req.body;
+    const { name, lastName, universityId, email, contactNumber, password } = req.body;
     
     console.log("📝 Registering new user:", { name, lastName, universityId, email, contactNumber });
+
+    // Convertir archivo de multer a base64 si existe
+    let photoBase64 = null;
+    if (req.file) {
+      photoBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    }
 
     // Hash the password
     const saltRounds = 12;
@@ -19,7 +25,7 @@ export const registerUser = async (req, res) => {
       email: email.toLowerCase().trim(),
       contactNumber: contactNumber.toString(),
       password: hashedPassword, // Now properly hashed
-      photo: photo || null, // Optional photo
+      photo: photoBase64 || null, // Optional photo from multer
       roles: ["passenger"], // Array de roles, inicializado como pasajero
       currentRole: "passenger", // Rol actual del usuario
       createdAt: new Date(),

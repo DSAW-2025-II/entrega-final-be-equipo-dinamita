@@ -61,11 +61,11 @@ export const validateRegisterVehicle = [
       }
     }
 
-    // Validar que se estén subiendo fotos
-    if (!photo || !photo.trim()) {
+    // Validar que se estén subiendo fotos (ahora vienen en req.files)
+    if (!req.files || !req.files.photo || !req.files.photo[0]) {
       errors.photo = "La foto del vehículo es requerida";
     }
-    if (!soat || !soat.trim()) {
+    if (!req.files || !req.files.soat || !req.files.soat[0]) {
       errors.soat = "La foto del SOAT es requerida";
     }
 

@@ -2,10 +2,23 @@ import { db } from "../../config/firebase.js";
 
 export const registerVehicle = async (req, res) => {
   try {
-    const { brand, model, plate, capacity, color, photo, soat } = req.body;
+    const { brand, model, plate, capacity, color } = req.body;
     // Asume usuario autenticado por middleware JWT
     const userId = req.user.userId;
     if (!userId) return res.status(401).json({ success: false, message: "No autenticado" });
+
+    // Convertir archivos de multer a base64
+    let photoBase64 = null;
+    let soatBase64 = null;
+
+    if (req.files) {
+      if (req.files.photo && req.files.photo[0]) {
+        photoBase64 = `data:${req.files.photo[0].mimetype};base64,${req.files.photo[0].buffer.toString('base64')}`;
+      }
+      if (req.files.soat && req.files.soat[0]) {
+        soatBase64 = `data:${req.files.soat[0].mimetype};base64,${req.files.soat[0].buffer.toString('base64')}`;
+      }
+    }
 
     // Crear vehículo
     const vehicleData = {
@@ -14,8 +27,8 @@ export const registerVehicle = async (req, res) => {
       plate: plate.trim().toUpperCase(),
       capacity: parseInt(capacity),
       color: color ? color.trim() : null,
-      photo: photo || null,
-      soat: soat || null,
+      photo: photoBase64,
+      soat: soatBase64,
       ownerId: userId,
       createdAt: new Date(),
     };
