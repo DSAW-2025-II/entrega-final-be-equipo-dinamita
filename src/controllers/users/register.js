@@ -1,16 +1,53 @@
 import { db } from "../../config/firebase.js";
 import bcrypt from "bcrypt";
+import { compressImageToBase64 } from "../../utils/imageCompression.js";
 
 export const registerUser = async (req, res) => {
   try {
+    // Debug: ver qué hay en req.body y req.file
+    console.log("📝 Registering new user - req.body:", req.body);
+    console.log("📝 req.file:", req.file ? "File present" : "No file");
+    
     const { name, lastName, universityId, email, contactNumber, password } = req.body;
     
-    console.log("📝 Registering new user:", { name, lastName, universityId, email, contactNumber });
+    // Validar que todos los campos requeridos estén presentes
+    if (!name || !lastName || !universityId || !email || !contactNumber || !password) {
+      return res.status(400).json({
+        success: false,
+        errors: {
+          general: "Todos los campos son requeridos",
+          missing: {
+            name: !name,
+            lastName: !lastName,
+            universityId: !universityId,
+            email: !email,
+            contactNumber: !contactNumber,
+            password: !password
+          }
+        }
+      });
+    }
 
-    // Convertir archivo de multer a base64 si existe
+    // Convertir archivo de multer a base64 si existe (con compresión)
     let photoBase64 = null;
-    if (req.file) {
-      photoBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    if (req.files && req.files.photo && req.files.photo[0]) {
+      const photoFile = req.files.photo[0];
+      photoBase64 = await compressImageToBase64(
+        photoFile.buffer,
+        photoFile.mimetype,
+        800, // maxWidth
+        800, // maxHeight
+        80   // quality
+      );
+    } else if (req.file) {
+      // Fallback para compatibilidad si se usa .single() en algún lugar
+      photoBase64 = await compressImageToBase64(
+        req.file.buffer,
+        req.file.mimetype,
+        800, // maxWidth
+        800, // maxHeight
+        80   // quality
+      );
     }
 
     // Hash the password
@@ -58,10 +95,12 @@ export const registerUser = async (req, res) => {
 
   } catch (error) {
     console.error("❌ User registration error:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       error: "Internal server error during registration",
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

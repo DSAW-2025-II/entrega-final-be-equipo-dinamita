@@ -10,7 +10,8 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // Límite estándar, multer maneja archivos
+// Parse JSON bodies (pero no multipart/form-data, eso lo maneja multer)
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // API routes

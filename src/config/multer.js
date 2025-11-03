@@ -32,8 +32,11 @@ export const uploadVehicleFiles = upload.fields([
   { name: "soat", maxCount: 1 },
 ]);
 
-// Middleware específico para registro de usuario (1 archivo: photo)
-export const uploadUserPhoto = upload.single("photo");
+// Middleware específico para registro de usuario (1 archivo: photo, pero también procesa otros campos)
+// Usamos .fields para asegurar que parse todos los campos de FormData
+export const uploadUserPhoto = upload.fields([
+  { name: "photo", maxCount: 1 }
+]);
 
 // Middleware específico para actualizar SOAT (1 archivo: soat)
 export const uploadSOAT = upload.single("soat");

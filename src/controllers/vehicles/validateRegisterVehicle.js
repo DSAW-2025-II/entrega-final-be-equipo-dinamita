@@ -2,6 +2,10 @@ import { db } from "../../config/firebase.js";
 
 export const validateRegisterVehicle = [
   async (req, res, next) => {
+    // Debug: ver qué hay en req.body
+    console.log("🔍 Validating vehicle - req.body:", req.body);
+    console.log("🔍 req.files:", req.files ? "Files present" : "No files");
+    
     const { brand, model, plate, capacity, photo, soat } = req.body ?? {};
     const errors = {};
     const userId = req.user?.userId;

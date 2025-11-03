@@ -1,22 +1,61 @@
 import { db } from "../../config/firebase.js";
+import { compressImageToBase64 } from "../../utils/imageCompression.js";
 
 export const registerVehicle = async (req, res) => {
   try {
+    // Debug: ver qué hay en req.body y req.files
+    console.log("🚗 Registering vehicle - req.body:", req.body);
+    console.log("🚗 req.files:", req.files ? "Files present" : "No files");
+    if (req.files) {
+      console.log("🚗 req.files.photo:", req.files.photo ? "Photo present" : "No photo");
+      console.log("🚗 req.files.soat:", req.files.soat ? "SOAT present" : "No SOAT");
+    }
+    
     const { brand, model, plate, capacity, color } = req.body;
     // Asume usuario autenticado por middleware JWT
     const userId = req.user.userId;
     if (!userId) return res.status(401).json({ success: false, message: "No autenticado" });
+    
+    // Validar que todos los campos requeridos estén presentes
+    if (!brand || !model || !plate || !capacity) {
+      return res.status(400).json({
+        success: false,
+        errors: {
+          general: "Todos los campos son requeridos",
+          missing: {
+            brand: !brand,
+            model: !model,
+            plate: !plate,
+            capacity: !capacity
+          }
+        }
+      });
+    }
 
-    // Convertir archivos de multer a base64
+    // Convertir archivos de multer a base64 (con compresión)
     let photoBase64 = null;
     let soatBase64 = null;
 
     if (req.files) {
       if (req.files.photo && req.files.photo[0]) {
-        photoBase64 = `data:${req.files.photo[0].mimetype};base64,${req.files.photo[0].buffer.toString('base64')}`;
+        const photoFile = req.files.photo[0];
+        photoBase64 = await compressImageToBase64(
+          photoFile.buffer,
+          photoFile.mimetype,
+          800, // maxWidth
+          800, // maxHeight
+          80   // quality
+        );
       }
       if (req.files.soat && req.files.soat[0]) {
-        soatBase64 = `data:${req.files.soat[0].mimetype};base64,${req.files.soat[0].buffer.toString('base64')}`;
+        const soatFile = req.files.soat[0];
+        soatBase64 = await compressImageToBase64(
+          soatFile.buffer,
+          soatFile.mimetype,
+          800, // maxWidth
+          800, // maxHeight
+          80   // quality
+        );
       }
     }
 
@@ -67,10 +106,12 @@ export const registerVehicle = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error registrando vehículo:", error);
+    console.error("Error stack:", error.stack);
     return res.status(500).json({
       success: false,
       message: "Error registrando vehículo",
       error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
