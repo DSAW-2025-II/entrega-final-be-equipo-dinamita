@@ -35,5 +35,8 @@ export const uploadVehicleFiles = upload.fields([
 // Middleware específico para registro de usuario (1 archivo: photo)
 export const uploadUserPhoto = upload.single("photo");
 
+// Middleware específico para actualizar SOAT (1 archivo: soat)
+export const uploadSOAT = upload.single("soat");
+
 export default upload;
 
