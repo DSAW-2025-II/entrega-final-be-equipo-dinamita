@@ -18,20 +18,38 @@ export const compressImageToBase64 = async (
 ) => {
   try {
     let compressedBuffer;
-    let sharpInstance = sharp(buffer).resize(maxWidth, maxHeight, {
-      fit: 'inside',
-      withoutEnlargement: true
-    });
+    // Para SVG, asegurar que se renderice a un tamaño decente
+    const isSvg = mimetype.includes('svg');
+    let sharpInstance = sharp(buffer);
+    
+    if (isSvg) {
+      // Para SVG, forzar renderizado a tamaño específico (sin withoutEnlargement)
+      sharpInstance = sharpInstance.resize(maxWidth, maxHeight, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 } // Fondo transparente
+      });
+    } else {
+      sharpInstance = sharpInstance.resize(maxWidth, maxHeight, {
+        fit: 'inside',
+        withoutEnlargement: true
+      });
+    }
     
     // Determinar el formato de salida basado en el mimetype
-    const format = mimetype.includes('png') ? 'png' : 'jpeg';
+    // SVG se convierte a PNG para mantener transparencia
+    const format = mimetype.includes('png') || mimetype.includes('svg') ? 'png' : 'jpeg';
     
     // Aplicar compresión según el formato
     if (format === 'png') {
-      sharpInstance = sharpInstance.png({ compressionLevel: 9 });
+      // Para SVG, usar menor compresión (mejor calidad), para PNG normal usar compresión media
+      // compressionLevel: 0 = sin compresión (mejor calidad), 9 = máxima compresión
+      const compressionLevel = isSvg ? 2 : 6; // SVG menos comprimido para mejor calidad
+      sharpInstance = sharpInstance.png({ 
+        compressionLevel
+      });
     } else {
-      // Convertir a JPEG para mejor compresión
-      sharpInstance = sharpInstance.jpeg({ quality });
+      // Convertir a JPEG para mejor compresión, pero con alta calidad
+      sharpInstance = sharpInstance.jpeg({ quality: Math.max(quality, 90) });
     }
     
     // Comprimir y redimensionar la imagen
@@ -56,9 +74,15 @@ export const compressImageToBase64 = async (
       );
       
       if (format === 'png') {
-        recompressInstance = recompressInstance.png({ compressionLevel: 9 });
+        // Mantener mejor calidad incluso en recompresión
+        const compressionLevel = isSvg ? 4 : 7;
+        recompressInstance = recompressInstance.png({ 
+          compressionLevel,
+          quality: 100
+        });
       } else {
-        recompressInstance = recompressInstance.jpeg({ quality: Math.max(60, quality - 20) });
+        // Para JPEG, usar calidad más baja para compresión más agresiva
+        recompressInstance = recompressInstance.jpeg({ quality: Math.max(70, quality - 10) });
       }
       
       compressedBuffer = await recompressInstance.toBuffer();
