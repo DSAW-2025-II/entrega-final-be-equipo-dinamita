@@ -6,14 +6,14 @@ const storage = multer.memoryStorage();
 
 // Filtro para solo aceptar imágenes
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp|svg/;
+  const allowedTypes = /jpeg|jpg|png|webp/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'image/svg+xml';
+  const mimetype = allowedTypes.test(file.mimetype);
 
   if (mimetype && extname) {
     return cb(null, true);
   } else {
-    cb(new Error("Solo se permiten archivos de imagen (jpeg, jpg, png, webp, svg)"));
+    cb(new Error("Solo se permiten archivos de imagen (jpeg, jpg, png, webp)"));
   }
 };
 
