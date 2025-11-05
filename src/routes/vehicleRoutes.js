@@ -1,21 +1,66 @@
 import express from "express";
+import multer from "multer";
 import { registerVehicle } from "../controllers/vehicles/registerVehicle.js";
 import { validateRegisterVehicle } from "../controllers/vehicles/validateRegisterVehicle.js";
-import { getVehicle } from "../controllers/vehicles/getVehicle.js";
 import { updateSOAT } from "../controllers/vehicles/updateSOAT.js";
+import { getVehicle } from "../controllers/vehicles/getVehicle.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
-import { uploadVehicleFiles, uploadSOAT } from "../config/multer.js";
 
 const router = express.Router();
 
-// Register a new vehicle (protected route)
-router.post("/register", authMiddleware, uploadVehicleFiles, ...validateRegisterVehicle, registerVehicle);
+// Configuración de multer para almacenamiento en memoria (para subir a Firebase)
+const storage = multer.memoryStorage();
 
-// Get vehicle information (protected route)
-router.get("/", authMiddleware, getVehicle);
+// Configuración para vehículos (foto y SOAT)
+const uploadVehicleFiles = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    // Aceptar imágenes y PDFs
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes y archivos PDF'), false);
+    }
+  }
+});
+
+// Configuración para SOAT solamente
+const uploadSOAT = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    // Solo aceptar PDFs para SOAT
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('El SOAT debe ser un archivo PDF'), false);
+    }
+  }
+});
+
+// Register a new vehicle (protected route)
+router.post(
+  "/",
+  authMiddleware,
+  uploadVehicleFiles.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "soat", maxCount: 1 },
+  ]),
+  validateRegisterVehicle,
+  registerVehicle
+);
+
+// Get vehicle by ID (protected route)
+router.get("/:vehicleId", authMiddleware, getVehicle);
 
 // Update SOAT (protected route)
-router.patch("/soat", authMiddleware, uploadSOAT, updateSOAT);
+router.patch(
+  "/soat/:vehicleId",
+  authMiddleware,
+  uploadSOAT.single("soat"),
+  updateSOAT
+);
 
 export default router;
 

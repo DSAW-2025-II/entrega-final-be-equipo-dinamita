@@ -85,6 +85,7 @@ export const registerVehicle = async (req, res) => {
       roles,
       currentRole: "driver",
       vehicleId: vehicleRef.id, // Agregar ID del vehículo al usuario
+      rides: [],
       updatedAt: new Date()
     });
 
