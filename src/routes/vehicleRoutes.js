@@ -41,7 +41,7 @@ const uploadSOAT = multer({
 
 // Register a new vehicle (protected route)
 router.post(
-  "/",
+  "/register",
   authMiddleware,
   uploadVehicleFiles.fields([
     { name: "photo", maxCount: 1 },
