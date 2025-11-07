@@ -12,9 +12,11 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 
 // Configuración para vehículos (foto y SOAT)
+const MAX_UPLOAD_SIZE_MB = 3;
+
 const uploadVehicleFiles = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: MAX_UPLOAD_SIZE_MB * 1024 * 1024 }, // 3MB
   fileFilter: (req, file, cb) => {
     // Aceptar imágenes y PDFs
     if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
@@ -39,14 +41,36 @@ const uploadSOAT = multer({
   }
 });
 
+const handleUploadErrors = (uploadMiddleware) => (req, res, next) => {
+  uploadMiddleware(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({
+          success: false,
+          message: "Los archivos deben pesar menos de 3MB. Comprime las imágenes e inténtalo nuevamente.",
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: err.message || "Error al subir archivos",
+      });
+    }
+
+    next();
+  });
+};
+
 // Register a new vehicle (protected route)
 router.post(
   "/register",
   authMiddleware,
-  uploadVehicleFiles.fields([
-    { name: "photo", maxCount: 1 },
-    { name: "soat", maxCount: 1 },
-  ]),
+  handleUploadErrors(
+    uploadVehicleFiles.fields([
+      { name: "photo", maxCount: 1 },
+      { name: "soat", maxCount: 1 },
+    ])
+  ),
   validateRegisterVehicle,
   registerVehicle
 );
