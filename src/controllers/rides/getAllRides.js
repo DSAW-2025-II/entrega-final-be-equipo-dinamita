@@ -51,7 +51,7 @@ export const getAllRides = async (req, res) => {
         }
 
         // Obtener información del vehículo para cada viaje
-        const rides = await Promise.all(
+        let rides = await Promise.all(
             ridesArray.map(async (item) => {
                 const rideData = item.data;
                 const rideId = item.id;
@@ -89,6 +89,11 @@ export const getAllRides = async (req, res) => {
                 };
             })
         );
+
+        // Si hay un usuario autenticado, filtrar los viajes que él creó
+        if (req.user && req.user.userId) {
+            rides = rides.filter(ride => ride.driverId !== req.user.userId);
+        }
 
         res.status(200).json({
             success: true,
