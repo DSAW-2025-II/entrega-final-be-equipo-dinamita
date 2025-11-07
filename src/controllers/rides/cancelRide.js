@@ -47,7 +47,7 @@ export const cancelRide = async (req, res) => {
             updatedAt: new Date()
         });
 
-        // Remover el ID del viaje del array 'rides' del usuario
+        // Remover el ID del viaje del array 'rides' del conductor
         const userDoc = await db.collection("users").doc(userId).get();
         
         if (userDoc.exists) {
@@ -61,6 +61,38 @@ export const cancelRide = async (req, res) => {
                 rides: updatedRides,
                 updatedAt: new Date()
             });
+        }
+
+        // Remover el rideId del array 'requests' de todos los pasajeros que tienen este viaje
+        const passengers = rideData.passengers || [];
+        if (passengers.length > 0) {
+            // Obtener todos los userIds únicos de los pasajeros
+            const uniquePassengerIds = [...new Set(passengers.map(p => p.userId).filter(Boolean))];
+            
+            // Actualizar cada pasajero para remover el rideId de su array 'requests'
+            await Promise.all(
+                uniquePassengerIds.map(async (passengerId) => {
+                    try {
+                        const passengerDoc = await db.collection("users").doc(passengerId).get();
+                        
+                        if (passengerDoc.exists) {
+                            const passengerData = passengerDoc.data();
+                            const passengerRequests = passengerData.requests || [];
+                            
+                            // Filtrar el rideId del array
+                            const updatedRequests = passengerRequests.filter(id => id !== rideId);
+                            
+                            await db.collection("users").doc(passengerId).update({
+                                requests: updatedRequests,
+                                updatedAt: new Date()
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error actualizando pasajero ${passengerId} al cancelar viaje:`, error);
+                        // Continuar con los demás pasajeros aunque falle uno
+                    }
+                })
+            );
         }
 
         // Retornar éxito
