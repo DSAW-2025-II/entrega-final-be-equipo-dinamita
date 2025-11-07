@@ -32,13 +32,19 @@ export const getAllRides = async (req, res) => {
             departureTime: doc.data().departureTime
         }));
 
-        // Filtrar solo los viajes con fecha futura y ordenar por fecha de salida
+        // Filtrar solo los viajes con fecha futura, con asientos disponibles y ordenar por fecha de salida
         const now = new Date();
         ridesArray = ridesArray.filter(item => {
             const departureDate = item.departureTime?.toDate 
                 ? item.departureTime.toDate() 
                 : new Date(item.departureTime);
-            return departureDate > now;
+            const rideData = item.data;
+            // Usar nullish coalescing para manejar correctamente cuando availableSeats es 0
+            const availableSeats = (rideData.availableSeats !== undefined && rideData.availableSeats !== null)
+                ? rideData.availableSeats
+                : (rideData.capacity ?? 0);
+            // Solo incluir viajes futuros y con asientos disponibles
+            return departureDate > now && availableSeats > 0;
         });
 
         // Ordenar por fecha de salida (más cercano primero) si no se ordenó en Firestore

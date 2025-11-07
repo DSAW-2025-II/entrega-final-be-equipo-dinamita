@@ -171,7 +171,39 @@ export const createRide = async (req, res) => {
         }
 
         // Validar que departureTime sea una fecha válida futura
-        const departureDate = new Date(departureTime);
+        // El formato datetime-local envía "YYYY-MM-DDTHH:mm" sin zona horaria
+        // JavaScript interpreta esto como hora local del servidor (que puede ser UTC)
+        // Necesitamos interpretarlo como hora local de Colombia (UTC-5) y guardarlo correctamente
+        let departureDate;
+        
+        // Si el string no tiene zona horaria (formato datetime-local)
+        // El formato será: "2024-01-15T14:00"
+        if (departureTime && typeof departureTime === 'string' && 
+            !departureTime.includes('Z') && 
+            !departureTime.match(/[+-]\d{2}:\d{2}$/)) {
+            
+            // Extraer la fecha y hora del string
+            const dateStr = departureTime.replace('T', ' ');
+            const [datePart, timePart] = dateStr.split(' ');
+            const [year, month, day] = datePart.split('-');
+            const [hours, minutes] = (timePart || '00:00').split(':');
+            
+            // Crear fecha asumiendo que es hora local de Colombia (UTC-5)
+            // Para guardar correctamente en UTC: si el usuario ingresa 14:00 hora Colombia,
+            // debemos guardar 19:00 UTC (14:00 + 5 horas)
+            departureDate = new Date(Date.UTC(
+                parseInt(year),
+                parseInt(month) - 1, // Meses en JS son 0-indexed
+                parseInt(day),
+                parseInt(hours) + 5, // Sumar 5 horas para convertir de Colombia (UTC-5) a UTC
+                parseInt(minutes || 0),
+                0
+            ));
+        } else {
+            // Si ya tiene zona horaria, usar directamente
+            departureDate = new Date(departureTime);
+        }
+        
         if (isNaN(departureDate.getTime())) {
             return res.status(400).json({
                 success: false,

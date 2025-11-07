@@ -111,13 +111,50 @@ export const requestRide = async (req, res) => {
 
         // Actualizar el viaje: agregar pasajeros y reducir asientos disponibles
         const updatedPassengers = [...existingPassengers, ...newPassengers];
-        const newAvailableSeats = availableSeats - tickets;
+        const newAvailableSeats = Math.max(0, availableSeats - tickets); // Asegurar que no sea negativo
 
-        await rideRef.update({
-            passengers: updatedPassengers,
-            availableSeats: newAvailableSeats,
-            updatedAt: new Date()
-        });
+        // Actualizar usando transacción para evitar condiciones de carrera
+        try {
+            await db.runTransaction(async (transaction) => {
+                const rideDoc = await transaction.get(rideRef);
+                
+                if (!rideDoc.exists) {
+                    throw new Error("Viaje no encontrado");
+                }
+                
+                const currentRideData = rideDoc.data();
+                const currentAvailableSeats = currentRideData.availableSeats || 0;
+                
+                // Verificar nuevamente que haya suficientes asientos (por si otro request los tomó)
+                if (tickets > currentAvailableSeats) {
+                    throw new Error(`No hay suficientes asientos disponibles. Solo quedan ${currentAvailableSeats} asiento(s)`);
+                }
+                
+                const finalAvailableSeats = Math.max(0, currentAvailableSeats - tickets);
+                
+                transaction.update(rideRef, {
+                    passengers: [...(currentRideData.passengers || []), ...newPassengers],
+                    availableSeats: finalAvailableSeats,
+                    updatedAt: new Date()
+                });
+                
+                return finalAvailableSeats;
+            });
+        } catch (transactionError) {
+            // Si es un error de validación, retornar el mensaje
+            if (transactionError.message.includes("No hay suficientes asientos")) {
+                return res.status(400).json({
+                    success: false,
+                    message: transactionError.message
+                });
+            }
+            throw transactionError;
+        }
+        
+        // Obtener el valor actualizado para la respuesta
+        const updatedRideDoc = await rideRef.get();
+        const updatedRideData = updatedRideDoc.data();
+        const finalAvailableSeats = updatedRideData.availableSeats || 0;
 
         // Agregar el ID del viaje al array 'requests' del usuario
         const userRequests = userData.requests || [];
@@ -135,8 +172,8 @@ export const requestRide = async (req, res) => {
             message: "Solicitud de viaje realizada exitosamente",
             ride: {
                 id: rideId,
-                availableSeats: newAvailableSeats,
-                passengers: updatedPassengers
+                availableSeats: finalAvailableSeats,
+                passengers: updatedRideData.passengers || []
             }
         });
 
