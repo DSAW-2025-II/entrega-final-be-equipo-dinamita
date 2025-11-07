@@ -12,7 +12,7 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 
 // Configuración para vehículos (foto y SOAT)
-const MAX_UPLOAD_SIZE_MB = 3;
+const MAX_UPLOAD_SIZE_MB = 2;
 
 const uploadVehicleFiles = multer({
   storage: storage,
