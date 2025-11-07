@@ -41,19 +41,6 @@ const corsOptions = {
 // Configurar CORS antes de cualquier middleware
 app.use(cors(corsOptions));
 
-// Middleware de logging para debugging en Vercel
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
-    url: req.url,
-    query: req.query,
-    headers: {
-      origin: req.headers.origin,
-      'content-type': req.headers['content-type']
-    }
-  });
-  next();
-});
-
 // Parse JSON bodies (pero no multipart/form-data, eso lo maneja multer)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -66,22 +53,37 @@ app.use("/api/vehicle", vehicleRoutes);
 
 // Ruta de health check
 app.get("/api/health", (req, res) => {
-  console.log("Health check recibido:", req.method, req.path);
-  res.status(200).json({
-    success: true,
-    message: "Backend is running",
-    timestamp: new Date().toISOString()
-  });
+  try {
+    res.status(200).json({
+      success: true,
+      message: "Backend is running",
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Error en health check:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error en health check"
+    });
+  }
 });
 
-// Ruta catch-all para debugging (debe ir antes del middleware de errores)
+// Ruta catch-all para debugging (debe ir ANTES del middleware de errores)
+// Solo se ejecuta si ninguna ruta anterior coincidió
 app.use((req, res, next) => {
-  console.log("Ruta no encontrada:", req.method, req.path, req.url);
+  // Si llegamos aquí, la ruta no fue encontrada
+  console.log("Ruta no encontrada:", {
+    method: req.method,
+    path: req.path,
+    url: req.url,
+    originalUrl: req.originalUrl
+  });
   res.status(404).json({
     success: false,
     message: "Ruta no encontrada",
     path: req.path,
-    url: req.url
+    url: req.url,
+    originalUrl: req.originalUrl
   });
 });
 
