@@ -38,35 +38,19 @@ const corsOptions = {
   optionsSuccessStatus: 200 // Algunos navegadores antiguos requieren esto
 };
 
+// Configurar CORS antes de cualquier middleware
 app.use(cors(corsOptions));
 
-// Manejar preflight requests explícitamente para todas las rutas
-// Express 5 no acepta '*' directamente, así que usamos un middleware
+// Middleware de logging para debugging en Vercel
 app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    const origin = req.headers.origin;
-    
-    // Determinar el origin permitido
-    const allowedOrigins = process.env.ALLOWED_ORIGINS 
-      ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-      : true;
-    
-    let allowOrigin = '*';
-    if (allowedOrigins !== true && origin) {
-      if (allowedOrigins.includes(origin)) {
-        allowOrigin = origin;
-      }
-    } else if (origin) {
-      allowOrigin = origin;
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
+    url: req.url,
+    query: req.query,
+    headers: {
+      origin: req.headers.origin,
+      'content-type': req.headers['content-type']
     }
-    
-    res.header('Access-Control-Allow-Origin', allowOrigin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '86400'); // 24 horas
-    return res.status(200).end();
-  }
+  });
   next();
 });
 
@@ -82,10 +66,22 @@ app.use("/api/vehicle", vehicleRoutes);
 
 // Ruta de health check
 app.get("/api/health", (req, res) => {
+  console.log("Health check recibido:", req.method, req.path);
   res.status(200).json({
     success: true,
     message: "Backend is running",
     timestamp: new Date().toISOString()
+  });
+});
+
+// Ruta catch-all para debugging (debe ir antes del middleware de errores)
+app.use((req, res, next) => {
+  console.log("Ruta no encontrada:", req.method, req.path, req.url);
+  res.status(404).json({
+    success: false,
+    message: "Ruta no encontrada",
+    path: req.path,
+    url: req.url
   });
 });
 
