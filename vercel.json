@@ -3,12 +3,6 @@
     "api/index.js": {
       "maxDuration": 30
     }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js?path=$1"
-    }
-  ]
+  }
 }
 

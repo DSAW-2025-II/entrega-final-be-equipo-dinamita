@@ -5,26 +5,50 @@ import serverless from "serverless-http";
 const handler = serverless(app, {
   binary: ['image/*', 'application/pdf', 'application/octet-stream'],
   request(request, event, context) {
-    // Vercel captura /api/(.*) y pasa la parte capturada como query param 'path'
-    // Necesitamos reconstruir el path completo /api/{captured}
-    const capturedPath = event.queryStringParameters?.path || event.path || '/';
+    // Vercel automáticamente detecta funciones en /api/ y expone /api/*
+    // El path debería estar en rawPath (Vercel v2) o path (Vercel v1)
+    const rawPath = event.rawPath || event.path;
     
-    // Construir el path completo
-    const fullPath = capturedPath === '/' 
-      ? '/api/' 
-      : `/api/${capturedPath.startsWith('/') ? capturedPath.slice(1) : capturedPath}`;
+    // Si rawPath existe y es diferente del request.url, usarlo
+    if (rawPath && rawPath !== request.url) {
+      request.url = rawPath;
+      request.path = rawPath.split('?')[0];
+    }
     
-    request.url = fullPath;
-    request.path = fullPath.split('?')[0];
-    
-    console.log('Path reconstruction:', {
-      captured: capturedPath,
-      queryParams: event.queryStringParameters,
-      eventPath: event.path,
-      finalPath: request.path
+    // Log para debugging
+    console.log('Vercel request:', {
+      rawPath: event.rawPath,
+      path: event.path,
+      requestUrl: request.url,
+      requestPath: request.path,
+      method: event.requestContext?.http?.method || event.httpMethod || request.method
     });
   }
 });
 
-export default handler;
+// Wrapper para manejar errores y asegurar que siempre se responda
+export default async (event, context) => {
+  // Evitar que la función espere indefinidamente
+  context.callbackWaitsForEmptyEventLoop = false;
+  
+  try {
+    const result = await handler(event, context);
+    return result;
+  } catch (error) {
+    console.error('Error en handler serverless:', error);
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': 'true'
+      },
+      body: JSON.stringify({
+        success: false,
+        message: 'Error interno del servidor',
+        error: error.message
+      })
+    };
+  }
+};
 
