@@ -41,7 +41,34 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Manejar preflight requests explícitamente para todas las rutas
-app.options('*', cors(corsOptions));
+// Express 5 no acepta '*' directamente, así que usamos un middleware
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin;
+    
+    // Determinar el origin permitido
+    const allowedOrigins = process.env.ALLOWED_ORIGINS 
+      ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+      : true;
+    
+    let allowOrigin = '*';
+    if (allowedOrigins !== true && origin) {
+      if (allowedOrigins.includes(origin)) {
+        allowOrigin = origin;
+      }
+    } else if (origin) {
+      allowOrigin = origin;
+    }
+    
+    res.header('Access-Control-Allow-Origin', allowOrigin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400'); // 24 horas
+    return res.status(200).end();
+  }
+  next();
+});
 
 // Parse JSON bodies (pero no multipart/form-data, eso lo maneja multer)
 app.use(express.json());
