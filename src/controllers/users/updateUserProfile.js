@@ -75,7 +75,8 @@ export const updateUserProfile = async (req, res) => {
       message: "Perfil actualizado exitosamente",
       user: {
         id: updatedUserDoc.id,
-        ...userWithoutPassword
+        ...userWithoutPassword,
+        requests: Array.isArray(userWithoutPassword.requests) ? userWithoutPassword.requests : []
       }
     });
 

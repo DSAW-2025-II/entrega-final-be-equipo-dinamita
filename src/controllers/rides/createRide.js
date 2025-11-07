@@ -39,6 +39,19 @@ export const createRide = async (req, res) => {
             });
         }
 
+        // Validar que el conductor no tenga un viaje activo
+        const activeRidesSnapshot = await db.collection("rides")
+            .where("driverId", "==", userId)
+            .where("status", "==", "active")
+            .get();
+        
+        if (!activeRidesSnapshot.empty) {
+            return res.status(400).json({
+                success: false,
+                message: "¡Ya tienes un viaje en curso! Finalízalo o cancélalo para crear otro."
+            });
+        }
+
         const { departurePoint, destinationPoint, route, departureTime, capacity, pricePassenger } = req.body;
 
         // Validar que todos los campos requeridos estén presentes

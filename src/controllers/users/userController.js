@@ -16,6 +16,7 @@ export const getCurrentUser = async (req, res) => {
     }
 
     const userData = userDoc.data();
+    const requests = Array.isArray(userData.requests) ? userData.requests : [];
     
     // Remove password from response for security
     const { password, ...userWithoutPassword } = userData;
@@ -24,7 +25,8 @@ export const getCurrentUser = async (req, res) => {
       success: true,
       user: {
         id: userDoc.id,
-        ...userWithoutPassword
+        ...userWithoutPassword,
+        requests
       }
     });
 
@@ -53,6 +55,7 @@ export const getUserById = async (req, res) => {
     }
 
     const userData = userDoc.data();
+    const requests = Array.isArray(userData.requests) ? userData.requests : [];
     
     // Remove password from response for security
     const { password, ...userWithoutPassword } = userData;
@@ -61,7 +64,8 @@ export const getUserById = async (req, res) => {
       success: true,
       user: {
         id: userDoc.id,
-        ...userWithoutPassword
+        ...userWithoutPassword,
+        requests
       }
     });
 
@@ -85,11 +89,13 @@ export const getAllUsers = async (req, res) => {
     const users = [];
     usersSnapshot.forEach(doc => {
       const userData = doc.data();
+      const requests = Array.isArray(userData.requests) ? userData.requests : [];
       // Remove password from response for security
       const { password, ...userWithoutPassword } = userData;
       users.push({
         id: doc.id,
-        ...userWithoutPassword
+        ...userWithoutPassword,
+        requests
       });
     });
 

@@ -21,6 +21,8 @@ export const loginUser = async (req, res) => {
 
     console.log("✅ User logged in successfully:", userData.email);
 
+    const requests = Array.isArray(userData.requests) ? userData.requests : [];
+
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -41,7 +43,8 @@ export const loginUser = async (req, res) => {
         name: userData.name,
         lastName: userData.lastName,
         email: userData.email,
-        roles: [userData.role]
+        roles: userData.roles || [userData.role].filter(Boolean),
+        requests
       }
     });
 
