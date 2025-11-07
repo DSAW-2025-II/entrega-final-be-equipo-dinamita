@@ -3,6 +3,8 @@ import { createRide } from "../controllers/rides/createRide.js";
 import { getDriverRides } from "../controllers/rides/getDriverRides.js";
 import { getAllRides } from "../controllers/rides/getAllRides.js";
 import { cancelRide } from "../controllers/rides/cancelRide.js";
+import { requestRide } from "../controllers/rides/requestRide.js";
+import { getUserRequests } from "../controllers/rides/getUserRequests.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import optionalAuthMiddleware from "../middlewares/optionalAuthMiddleware.js";
 
@@ -19,5 +21,11 @@ router.get("/", optionalAuthMiddleware, getAllRides);
 
 // Cancel a ride (protected route - only the driver owner)
 router.delete("/:rideId", authMiddleware, cancelRide);
+
+// Request a ride (protected route - passengers)
+router.post("/:rideId/request", authMiddleware, requestRide);
+
+// Get user's ride requests (protected route)
+router.get("/requests", authMiddleware, getUserRequests);
 
 export default router;

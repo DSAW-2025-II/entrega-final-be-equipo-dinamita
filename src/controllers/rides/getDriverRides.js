@@ -73,9 +73,38 @@ export const getDriverRides = async (req, res) => {
                     }
                 }
 
+                // Obtener información de contacto de los pasajeros si no la tienen
+                let passengers = rideData.passengers || [];
+                if (passengers.length > 0) {
+                    passengers = await Promise.all(
+                        passengers.map(async (passenger) => {
+                            // Si el pasajero no tiene contacto pero tiene userId, buscarlo
+                            if (!passenger.contact && passenger.userId) {
+                                try {
+                                    const passengerDoc = await db.collection("users")
+                                        .doc(passenger.userId)
+                                        .get();
+                                    
+                                    if (passengerDoc.exists) {
+                                        const passengerData = passengerDoc.data();
+                                        return {
+                                            ...passenger,
+                                            contact: passengerData.contactNumber || null
+                                        };
+                                    }
+                                } catch (error) {
+                                    console.error(`Error obteniendo contacto del pasajero ${passenger.userId}:`, error);
+                                }
+                            }
+                            return passenger;
+                        })
+                    );
+                }
+
                 return {
                     id: rideId,
                     ...rideData,
+                    passengers: passengers, // Pasajeros con contacto actualizado
                     departureTime: rideData.departureTime?.toDate?.() 
                         ? rideData.departureTime.toDate().toISOString() 
                         : rideData.departureTime,
