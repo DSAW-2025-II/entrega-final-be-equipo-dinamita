@@ -5,6 +5,7 @@ import { getAllRides } from "../controllers/rides/getAllRides.js";
 import { cancelRide } from "../controllers/rides/cancelRide.js";
 import { requestRide } from "../controllers/rides/requestRide.js";
 import { getUserRequests } from "../controllers/rides/getUserRequests.js";
+import { cancelRideRequest } from "../controllers/rides/cancelRideRequest.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import optionalAuthMiddleware from "../middlewares/optionalAuthMiddleware.js";
 
@@ -19,13 +20,17 @@ router.get("/driver", authMiddleware, getDriverRides);
 // Get all available rides (public route, but can use optional auth for future filtering)
 router.get("/", optionalAuthMiddleware, getAllRides);
 
-// Cancel a ride (protected route - only the driver owner)
-router.delete("/:rideId", authMiddleware, cancelRide);
+// Get user's ride requests (protected route)
+router.get("/requests", authMiddleware, getUserRequests);
 
 // Request a ride (protected route - passengers)
 router.post("/:rideId/request", authMiddleware, requestRide);
 
-// Get user's ride requests (protected route)
-router.get("/requests", authMiddleware, getUserRequests);
+// Leave a ride (cancel reservation) (protected route - passengers)
+// IMPORTANTE: Esta ruta debe ir ANTES de DELETE /:rideId para evitar conflictos
+router.delete("/:id/leave", authMiddleware, cancelRideRequest);
+
+// Cancel a ride (protected route - only the driver owner)
+router.delete("/:rideId", authMiddleware, cancelRide);
 
 export default router;
