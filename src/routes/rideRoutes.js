@@ -1,0 +1,40 @@
+import express from "express";
+import { createRide } from "../controllers/rides/createRide.js";
+import { getDriverRides } from "../controllers/rides/getDriverRides.js";
+import { getAllRides } from "../controllers/rides/getAllRides.js";
+import { cancelRide } from "../controllers/rides/cancelRide.js";
+import { requestRide } from "../controllers/rides/requestRide.js";
+import { getUserRequests } from "../controllers/rides/getUserRequests.js";
+import { cancelRideRequest } from "../controllers/rides/cancelRideRequest.js";
+import { finalizeRide } from "../controllers/rides/finalizeRide.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import optionalAuthMiddleware from "../middlewares/optionalAuthMiddleware.js";
+
+const router = express.Router();
+
+// Create a new ride (protected route - only drivers)
+router.post("/", authMiddleware, createRide);
+
+// Get driver's rides (protected route - only drivers)
+router.get("/driver", authMiddleware, getDriverRides);
+
+// Get all available rides (public route, but can use optional auth for future filtering)
+router.get("/", optionalAuthMiddleware, getAllRides);
+
+// Get user's ride requests (protected route)
+router.get("/requests", authMiddleware, getUserRequests);
+
+// Finalize a ride (protected route - only drivers)
+router.patch("/finalize", authMiddleware, finalizeRide);
+
+// Request a ride (protected route - passengers)
+router.post("/:rideId/request", authMiddleware, requestRide);
+
+// Leave a ride (cancel reservation) (protected route - passengers)
+// IMPORTANTE: Esta ruta debe ir ANTES de DELETE /:rideId para evitar conflictos
+router.delete("/:id/leave", authMiddleware, cancelRideRequest);
+
+// Cancel a ride (protected route - only the driver owner)
+router.delete("/:rideId", authMiddleware, cancelRide);
+
+export default router;
