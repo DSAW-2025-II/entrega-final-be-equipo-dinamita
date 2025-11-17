@@ -32,11 +32,11 @@ const uploadSOAT = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    // Solo aceptar PDFs para SOAT
-    if (file.mimetype === 'application/pdf') {
+    // Solo aceptar imágenes para SOAT
+    if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('El SOAT debe ser un archivo PDF'), false);
+      cb(new Error('El SOAT debe ser una imagen'), false);
     }
   }
 });
@@ -47,7 +47,7 @@ const handleUploadErrors = (uploadMiddleware) => (req, res, next) => {
       if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
         return res.status(413).json({
           success: false,
-          message: "Los archivos deben pesar menos de 3MB. Comprime las imágenes e inténtalo nuevamente.",
+          message: "El archivo debe pesar menos de 10MB. Comprime la imagen e inténtalo nuevamente.",
         });
       }
 

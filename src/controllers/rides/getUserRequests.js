@@ -43,10 +43,10 @@ export const getUserRequests = async (req, res) => {
 
                     const rideData = rideDoc.data();
 
-                    // Filtrar viajes cancelados - no mostrar viajes cancelados en las reservas
-                    if (rideData.status === "cancelled") {
+                    // Filtrar viajes cancelados y finalizados - no mostrar estos viajes en las reservas
+                    if (rideData.status === "cancelled" || rideData.status === "finished") {
                         return null;
-                    }
+                    } 
 
                     // Obtener información del vehículo
                     let vehicleImage = null;
