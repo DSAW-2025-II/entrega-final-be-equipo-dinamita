@@ -6,8 +6,6 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    console.log("🔐 Login attempt for:", email);
-
     // Find user by email
     const userSnapshot = await db.collection("users")
       .where("email", "==", email.toLowerCase().trim())
@@ -18,8 +16,6 @@ export const loginUser = async (req, res) => {
 
     const userDoc = userSnapshot.docs[0];
     const userData = userDoc.data();
-
-    console.log("✅ User logged in successfully:", userData.email);
 
     const requests = Array.isArray(userData.requests) ? userData.requests : [];
 

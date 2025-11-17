@@ -3,14 +3,6 @@ import { compressImageToBase64 } from "../../utils/imageCompression.js";
 
 export const registerVehicle = async (req, res) => {
   try {
-    // Debug: ver qué hay en req.body y req.files
-    console.log("🚗 Registering vehicle - req.body:", req.body);
-    console.log("🚗 req.files:", req.files ? "Files present" : "No files");
-    if (req.files) {
-      console.log("🚗 req.files.photo:", req.files.photo ? "Photo present" : "No photo");
-      console.log("🚗 req.files.soat:", req.files.soat ? "SOAT present" : "No SOAT");
-    }
-    
     const { brand, model, plate, capacity, color } = req.body;
     // Asume usuario autenticado por middleware JWT
     const userId = req.user.userId;

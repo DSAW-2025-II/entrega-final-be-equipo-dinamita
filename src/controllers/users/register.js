@@ -3,11 +3,7 @@ import bcrypt from "bcrypt";
 import { compressImageToBase64 } from "../../utils/imageCompression.js";
 
 export const registerUser = async (req, res) => {
-  try {
-    // Debug: ver qué hay en req.body y req.file
-    console.log("📝 Registering new user - req.body:", req.body);
-    console.log("📝 req.file:", req.file ? "File present" : "No file");
-    
+  try {    
     const { name, lastName, universityId, email, contactNumber, password } = req.body;
     
     // Validar que todos los campos requeridos estén presentes
@@ -77,8 +73,6 @@ export const registerUser = async (req, res) => {
     // Add user to Firestore
     const userRef = await db.collection("users").add(userData);
     
-    console.log("✅ User registered successfully with ID:", userRef.id);
-
     res.status(201).json({
       success: true,
       message: "User registered successfully",

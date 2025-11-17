@@ -36,7 +36,7 @@ try {
 
   db = admin.firestore();
 } catch (error) {
-  console.error("❌ Error inicializando Firebase Admin:", error);
+  console.error("Error inicializando Firebase Admin:", error);
   // No lanzar el error inmediatamente, permitir que el servidor inicie
   // Los errores se manejarán cuando se intenten usar las funciones de Firebase
 }
