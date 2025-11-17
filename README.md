@@ -4,9 +4,9 @@
 ## URL Frontend: SU_URL_AQUÍ
 ## URL Backend: SU_URL_AQUÍ
 ## Nombre estudiante 1: 
-### Karol Briyith Esquivel Peña - 343927
+👩🏻‍🎓 Karol Briyith Esquivel Peña - 343927
 ## Nombre estudiante 2:
-### Carlos Andrés Vargas Escobar - 337093
+👨🏽‍🎓 Carlos Andrés Vargas Escobar - 337093
 
 # MODIFIQUE ESTE README AGREGANDO LA INFORMACIÓN QUE CONSIDERE PERTINENTE
 
